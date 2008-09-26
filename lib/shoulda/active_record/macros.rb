@@ -1,12 +1,12 @@
 module ThoughtBot # :nodoc:
   module Shoulda # :nodoc:
     module ActiveRecord # :nodoc:
-      DEFAULT_ERROR_MESSAGES =
-        if Object.const_defined?(:I18n)
-          I18n.translate('activerecord.errors.messages')
-        else
-          ::ActiveRecord::Errors.default_error_messages
-        end
+#      DEFAULT_ERROR_MESSAGES =
+#        if Object.const_defined?(:I18n)
+#          I18n.translate('activerecord.errors.messages')
+#        else
+#          ::ActiveRecord::Errors.default_error_messages
+#        end
 
       # = Macro test helpers for your active record models
       #
@@ -28,6 +28,27 @@ module ThoughtBot # :nodoc:
       # For all of these helpers, the last parameter may be a hash of options.
       #
       module Macros
+
+        # Helper method that verifies if responds to I18n (Rails 2.2 - Edge) and
+        # uses this method to translate active record errors through interpolation
+        # instead of deprecated default_error_messages from ActiveRecord::Errors
+        # (Rails <= 2.1.x). Still works with ActiveRecord::Errors.default_error_messages
+        # for compatibility with actual and earlier Rails versions.
+        #
+        # Example:
+        #   default_error_messages(:blank)
+        #   default_error_messages(:too_short, 5)
+        #   default_error_messages(:too_long, 60)
+        #
+        def default_error_messages(key, count=nil)
+          # Rails 2.2 - I18n
+          if Object.const_defined?(:I18n)
+            I18n.translate("activerecord.errors.messages.#{key}", :count => count)
+          else # Rails <= 2.1.x
+            ::ActiveRecord::Errors.default_error_messages[key] % count
+          end
+        end
+
         # <b>DEPRECATED:</b> Use <tt>fixtures :all</tt> instead
         #
         # Loads all fixture files (<tt>test/fixtures/*.yml</tt>)
@@ -51,7 +72,7 @@ module ThoughtBot # :nodoc:
         #
         def should_require_attributes(*attributes)
           message = get_options!(attributes, :message)
-          message ||= DEFAULT_ERROR_MESSAGES[:blank]
+          message ||= default_error_messages(:blank)
           klass = model_class
 
           attributes.each do |attribute|
@@ -78,7 +99,7 @@ module ThoughtBot # :nodoc:
         def should_require_unique_attributes(*attributes)
           message, scope = get_options!(attributes, :message, :scoped_to)
           scope = [*scope].compact
-          message ||= DEFAULT_ERROR_MESSAGES[:taken]
+          message ||= default_error_messages(:taken)
 
           klass = model_class
           attributes.each do |attribute|
@@ -171,7 +192,7 @@ module ThoughtBot # :nodoc:
         #
         def should_not_allow_values_for(attribute, *bad_values)
           message = get_options!(bad_values, :message)
-          message ||= DEFAULT_ERROR_MESSAGES[:invalid]
+          message ||= default_error_messages(:invalid)
           klass = model_class
           bad_values.each do |v|
             should "not allow #{attribute} to be set to #{v.inspect}" do
@@ -216,8 +237,8 @@ module ThoughtBot # :nodoc:
         #
         def should_ensure_length_in_range(attribute, range, opts = {})
           short_message, long_message = get_options!([opts], :short_message, :long_message)
-          short_message ||= DEFAULT_ERROR_MESSAGES[:too_short] % range.first
-          long_message  ||= DEFAULT_ERROR_MESSAGES[:too_long] % range.last
+          short_message ||= default_error_messages(:too_short, range.first)
+          long_message  ||= default_error_messages(:too_long, range.last)
 
           klass = model_class
           min_length = range.first
@@ -266,7 +287,7 @@ module ThoughtBot # :nodoc:
         #
         def should_ensure_length_at_least(attribute, min_length, opts = {})
           short_message = get_options!([opts], :short_message)
-          short_message ||= DEFAULT_ERROR_MESSAGES[:too_short] % min_length
+          short_message ||= default_error_messages(:too_short, min_length)
 
           klass = model_class
 
@@ -297,7 +318,7 @@ module ThoughtBot # :nodoc:
         #
         def should_ensure_length_is(attribute, length, opts = {})
           message = get_options!([opts], :message)
-          message ||= DEFAULT_ERROR_MESSAGES[:wrong_length] % length
+          message ||= default_error_messages(:wrong_length, length)
 
           klass = model_class
 
@@ -334,8 +355,8 @@ module ThoughtBot # :nodoc:
         #
         def should_ensure_value_in_range(attribute, range, opts = {})
           low_message, high_message = get_options!([opts], :low_message, :high_message)
-          low_message  ||= DEFAULT_ERROR_MESSAGES[:inclusion]
-          high_message ||= DEFAULT_ERROR_MESSAGES[:inclusion]
+          low_message  ||= default_error_messages(:inclusion)
+          high_message ||= default_error_messages(:inclusion)
 
           klass = model_class
           min   = range.first
@@ -377,7 +398,7 @@ module ThoughtBot # :nodoc:
         #
         def should_only_allow_numeric_values_for(*attributes)
           message = get_options!(attributes, :message)
-          message ||= DEFAULT_ERROR_MESSAGES[:not_a_number]
+          message ||= default_error_messages(:not_a_number)
           klass = model_class
           attributes.each do |attribute|
             attribute = attribute.to_sym
@@ -631,7 +652,7 @@ module ThoughtBot # :nodoc:
         #
         def should_require_acceptance_of(*attributes)
           message = get_options!(attributes, :message)
-          message ||= DEFAULT_ERROR_MESSAGES[:accepted]
+          message ||= default_error_messages(:accepted)
           klass = model_class
 
           attributes.each do |attribute|
