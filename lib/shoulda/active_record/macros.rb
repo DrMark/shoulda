@@ -1,6 +1,26 @@
 module ThoughtBot # :nodoc:
   module Shoulda # :nodoc:
     module ActiveRecord # :nodoc:
+
+      # Helper method that verifies if responds to I18n (Rails 2.2 - Edge) and
+      # uses this method to translate active record errors through interpolation
+      # instead of deprecated default_error_messages from ActiveRecord::Errors
+      # (Rails <= 2.1.x). Still works with ActiveRecord::Errors.default_error_messages
+      # for compatibility with actual and earlier Rails versions.
+      #
+      # Example:
+      #   default_error_messages(:blank)
+      #   default_error_messages(:too_short, 5)
+      #   default_error_messages(:too_long, 60)
+      #
+      def default_error_messages(key, values = {})
+        if Object.const_defined?(:I18n) # Rails >= 2.2
+          I18n.translate("activerecord.errors.messages.#{key}", values)
+        else # Rails <= 2.1.x
+          ::ActiveRecord::Errors.default_error_messages[key] % values[:count]
+        end
+      end
+
 #      DEFAULT_ERROR_MESSAGES =
 #        if Object.const_defined?(:I18n)
 #          I18n.translate('activerecord.errors.messages')
@@ -28,26 +48,6 @@ module ThoughtBot # :nodoc:
       # For all of these helpers, the last parameter may be a hash of options.
       #
       module Macros
-
-        # Helper method that verifies if responds to I18n (Rails 2.2 - Edge) and
-        # uses this method to translate active record errors through interpolation
-        # instead of deprecated default_error_messages from ActiveRecord::Errors
-        # (Rails <= 2.1.x). Still works with ActiveRecord::Errors.default_error_messages
-        # for compatibility with actual and earlier Rails versions.
-        #
-        # Example:
-        #   default_error_messages(:blank)
-        #   default_error_messages(:too_short, 5)
-        #   default_error_messages(:too_long, 60)
-        #
-        def default_error_messages(key, count=nil)
-          # Rails 2.2 - I18n
-          if Object.const_defined?(:I18n)
-            I18n.translate("activerecord.errors.messages.#{key}", :count => count)
-          else # Rails <= 2.1.x
-            ::ActiveRecord::Errors.default_error_messages[key] % count
-          end
-        end
 
         # <b>DEPRECATED:</b> Use <tt>fixtures :all</tt> instead
         #
