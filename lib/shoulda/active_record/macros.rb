@@ -15,7 +15,7 @@ module ThoughtBot # :nodoc:
       #
       def default_error_messages(key, values = {})
         if Object.const_defined?(:I18n) # Rails >= 2.2
-          I18n.translate("activerecord.errors.messages.#{key}", values)
+          I18n.translate("activerecord.errors.messages.#{key}", :count => values)
         else # Rails <= 2.1.x
           ::ActiveRecord::Errors.default_error_messages[key] % values[:count]
         end
