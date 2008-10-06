@@ -10,12 +10,12 @@ module ThoughtBot # :nodoc:
       #
       # Example:
       #   default_error_messages(:blank)
-      #   default_error_messages(:too_short, 5)
-      #   default_error_messages(:too_long, 60)
+      #   default_error_messages(:too_short, {:count => 5})
+      #   default_error_messages(:too_long, {:count => 60})
       #
       def default_error_messages(key, values = {})
         if Object.const_defined?(:I18n) # Rails >= 2.2
-          I18n.translate("activerecord.errors.messages.#{key}", :count => values)
+          I18n.translate("activerecord.errors.messages.#{key}", values)
         else # Rails <= 2.1.x
           ::ActiveRecord::Errors.default_error_messages[key] % values[:count]
         end
@@ -237,8 +237,8 @@ module ThoughtBot # :nodoc:
         #
         def should_ensure_length_in_range(attribute, range, opts = {})
           short_message, long_message = get_options!([opts], :short_message, :long_message)
-          short_message ||= default_error_messages(:too_short, range.first)
-          long_message  ||= default_error_messages(:too_long, range.last)
+          short_message ||= default_error_messages(:too_short, {:count => range.first})
+          long_message  ||= default_error_messages(:too_long, {:count => range.last})
 
           klass = model_class
           min_length = range.first
@@ -287,7 +287,7 @@ module ThoughtBot # :nodoc:
         #
         def should_ensure_length_at_least(attribute, min_length, opts = {})
           short_message = get_options!([opts], :short_message)
-          short_message ||= default_error_messages(:too_short, min_length)
+          short_message ||= default_error_messages(:too_short, {:count => min_length})
 
           klass = model_class
 
@@ -318,7 +318,7 @@ module ThoughtBot # :nodoc:
         #
         def should_ensure_length_is(attribute, length, opts = {})
           message = get_options!([opts], :message)
-          message ||= default_error_messages(:wrong_length, length)
+          message ||= default_error_messages(:wrong_length, {:count => length})
 
           klass = model_class
 
